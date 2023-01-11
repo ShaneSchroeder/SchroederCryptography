@@ -1,22 +1,13 @@
-import messageSecurity
+from messageSecurity import messageSecurity
 
-print('')
-print('')
+userInput = input('Please enter a word to be encrypted: ')
+userPasscode = input('Please enter a passcode to validate encryption and decryption: ')
+userKeyPath = input('Please enter the path where your key file is stored (default "keys/key.txt")')
 
-user = input('Please enter a word to be encrypted: ')
+message = messageSecurity(userInput, userPasscode, userKeyPath)
 
-message = messageSecurity.messageSecurity(user)
-
-print('')
-
-print('Encrypted Message: ')
+print('\nEncrypted Message: ')
 print(message.encrypt())
 
-print('')
-print('')
-
-print('Decrypted Message: ')
+print('\n\nDecrypted Message: ')
 print(message.decrypt())
-
-print('')
-print('')
