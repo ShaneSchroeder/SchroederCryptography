@@ -10,7 +10,8 @@ Will use generate something like an ssh key to validate encryption
 and decryption based on a passcode.
 """
 import random
-import os
+import json
+import pathlib
 class messageSecurity:
 
     message = ""
@@ -21,16 +22,33 @@ class messageSecurity:
     pathToKeyFile = ""
     hasValidKey = False
 
-    def __init__ (self, message, passcode, pathToKeyFile='keys/key.txt'):
+    def __init__ (self, message, passcode, pathToKeyFile, generateNewKey=0):
         self.message = message
         self.passcode = passcode
-        self.pathToKeyFile = pathToKeyFile
-        keyExists = self.checkKeyFile()
-        self.hasValidKey = keyExists
-        if not keyExists:
+        if pathToKeyFile == "":
+            self.pathToKeyFile = 'keys/key.txt'
+        else:
+            self.pathToKeyFile = pathToKeyFile
+
+        # check if the path to the key exists
+        if pathlib.Path(self.pathToKeyFile):
+            keyExists = True
+        
+        # if the key does not exist, create key
+        if not keyExists or generateNewKey == 1:
+            print("Generating new key...")
             self.generateKeyFile()
+            print("New key created at: {0}".format(self.pathToKeyFile))
+        # check for validity
+        self.hasValidKey = self.checkKeyFile()
+        
+        # Will now use the variable to allow encryption/decryption, 
+        # if not valid, return warning strings from both ^, else allow it.
 
     def checkKeyFile(self):
+        """
+        Will check if the existing key file matches the entered password to encrypt/decrypt
+        """
         try:
             encryptedPasscode = ""
             shiftsForPasscode = ""
@@ -39,24 +57,32 @@ class messageSecurity:
             if len(key.readlines()) != 3:
                 return False
             key.seek(0)
-            encryptedPasscode = key.readline()
-            shiftsForPasscode = list(key.readline())
-            operationsForPasscode = list(key.readline())
+            encryptedPasscode = key.readline().strip()
+            shiftsForPasscode = json.loads(key.readline().strip())
+            operationsForPasscode = json.loads(key.readline().strip())
             key.close()
+            self.hasValidKey = True
             decryptedPass = self.decrypt(encryptedPasscode, shiftsForPasscode, operationsForPasscode)
-            print("decrypted: " + decryptedPass)
-            print(shiftsForPasscode)
-            print(operationsForPasscode)
-            if self.decrypt(encryptedPasscode, shiftsForPasscode, operationsForPasscode) == self.passcode:
+            self.hasValidKey = False
+            if decryptedPass == self.passcode:
                 return True
             return False
         except IOError:
             return False
 
     def generateKeyFile(self):
+        """
+        Will generate a new key file stored in the following format
+
+        {encrypted passcode}
+        {shift array}
+        {direction array}
+
+        """
+        self.hasValidKey = True
         with open(self.pathToKeyFile, 'w') as key:
             key.write(self.encrypt(self.passcode)+'\n')
-            key.write("{}\n".format(self.shifts))
+            key.write(str(self.shifts) + '\n')
             key.write(str(self.operations)+'\n')
             key.close()
             self.shifts = []
@@ -68,6 +94,10 @@ class messageSecurity:
         shifting up or down randomly a character from unicode numbers.
         This method will also handle the *annoying* smart quote from Microsoft's programs.
         """
+
+        if not self.hasValidKey:
+            return "No valid key to encrypt"
+
         if(stringToEncrypt == None):
             stringToEncrypt = self.message
         if(stringToEncrypt == ""):
@@ -138,6 +168,10 @@ class messageSecurity:
         """
         Simple decrypt method that will read the lists shift amounts and direction.
         """
+
+        if not self.hasValidKey:
+            return "No valid key to decrypt"
+
         if(shifts == None):
             shifts = self.shifts
         if(operations == None):
