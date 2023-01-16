@@ -31,21 +31,22 @@ class messageSecurity:
             self.pathToKeyFile = pathToKeyFile
 
         # check if the path to the key exists
+        keyExists = False
         if pathlib.Path(self.pathToKeyFile):
             keyExists = True
         
         # if the key does not exist, create key
         if not keyExists or generateNewKey == 1:
             print("Generating new key...")
-            self.generateKeyFile()
+            self.__generateKeyFile()
             print("New key created at: {0}".format(self.pathToKeyFile))
         # check for validity
-        self.hasValidKey = self.checkKeyFile()
+        self.hasValidKey = self.__checkKeyFile()
         
         # Will now use the variable to allow encryption/decryption, 
         # if not valid, return warning strings from both ^, else allow it.
 
-    def checkKeyFile(self):
+    def __checkKeyFile(self):
         """
         Will check if the existing key file matches the entered password to encrypt/decrypt
         """
@@ -70,7 +71,7 @@ class messageSecurity:
         except IOError:
             return False
 
-    def generateKeyFile(self):
+    def __generateKeyFile(self):
         """
         Will generate a new key file stored in the following format
 
